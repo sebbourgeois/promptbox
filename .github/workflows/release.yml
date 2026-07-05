@@ -1,0 +1,107 @@
+name: Tag & Release
+
+# Bumping "version" in package.json and pushing to master/main creates the
+# matching v* tag, builds installers for all three platforms, and publishes
+# them as a GitHub Release. Pushes that don't change the version are no-ops
+# (the tag already exists, so build/release jobs are skipped).
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Tag version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      created: ${{ steps.create.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from package.json
+        id: version
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag if it does not exist
+        id: create
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping build and release."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: build:win
+            artifacts: dist/*.exe
+          - os: macos-latest
+            script: build:mac
+            artifacts: dist/*.dmg
+          - os: ubuntu-latest
+            script: build:linux
+            artifacts: dist/*.AppImage
+    runs-on: ${{ matrix.os }}
+    env:
+      # No code-signing certificates in CI; ship unsigned builds
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build installer
+        run: npm run ${{ matrix.script }} -- --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-installer
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [tag, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la installers
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.tag.outputs.tag }}
+          name: PromptBox ${{ needs.tag.outputs.tag }}
+          generate_release_notes: true
+          files: installers/*

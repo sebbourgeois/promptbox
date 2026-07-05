@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptBox</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Feather Icons CDN -->
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- COLUMN 1: SIDEBAR (Folders) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">✨</div>
+          <h1>PromptBox</h1>
+        </div>
+      </div>
+      
+      <div class="sidebar-search">
+        <div class="search-input-wrapper">
+          <i data-feather="search" class="search-icon"></i>
+          <input type="text" id="folder-search" placeholder="Search folders...">
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="section-title">
+          <span>FOLDERS</span>
+          <button id="btn-add-folder" class="icon-btn-small" title="Create Folder">
+            <i data-feather="plus"></i>
+          </button>
+        </div>
+        
+        <ul id="folder-list" class="folder-list">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="theme-info">
+          <i data-feather="database" class="db-icon"></i>
+          <span>Local Storage Enabled</span>
+        </div>
+        <button id="btn-theme-toggle" class="icon-btn-small theme-toggle-btn" title="Switch theme">
+          <i data-feather="sun"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- COLUMN 2: PROMPTS LIST -->
+    <section class="prompts-panel">
+      <div class="panel-header">
+        <div class="header-title-row">
+          <h2 id="active-folder-name">Select Folder</h2>
+          <span id="prompts-count" class="badge">0</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-add-prompt" class="btn btn-primary btn-sm" disabled>
+            <i data-feather="plus"></i> New Prompt
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-search-filters">
+        <div class="search-input-wrapper">
+          <i data-feather="search" class="search-icon"></i>
+          <input type="text" id="prompt-search" placeholder="Search title, prompt, tags...">
+        </div>
+
+        <div class="filter-controls">
+          <div class="sort-control">
+            <label for="prompt-sort"><i data-feather="sliders" class="small-icon"></i></label>
+            <select id="prompt-sort">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="alphabetical">A to Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tag Filters Scrollable Area -->
+      <div id="tag-filters-container" class="tag-filters-container">
+        <!-- Dynamically populated tag filters -->
+      </div>
+
+      <div class="prompts-list-wrapper">
+        <ul id="prompt-list" class="prompt-list">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+    </section>
+
+    <!-- COLUMN 3: PROMPT DETAILS -->
+    <section class="details-panel" id="details-panel">
+      <!-- Empty State -->
+      <div id="details-empty-state" class="empty-state">
+        <div class="empty-state-icon">
+          <i data-feather="file-text"></i>
+        </div>
+        <h3>No Prompt Selected</h3>
+        <p>Choose a prompt from the list or create a new one to view details.</p>
+      </div>
+
+      <!-- Detail View -->
+      <div id="details-content" class="details-content hidden">
+        <div class="details-header">
+          <div class="details-meta-top">
+            <span id="detail-folder-badge" class="detail-folder-badge">Folder Name</span>
+            <span id="detail-updated-at" class="detail-timestamp">Updated 2 mins ago</span>
+          </div>
+          <div class="details-title-row">
+            <h2 id="detail-title">Prompt Title</h2>
+            <div class="detail-actions">
+              <button id="btn-copy-prompt" class="btn btn-accent" title="Copy Prompt Text">
+                <i data-feather="copy" class="btn-icon"></i> <span id="copy-btn-text">Copy</span>
+              </button>
+              <button id="btn-edit-prompt" class="btn btn-secondary icon-only" title="Edit Prompt">
+                <i data-feather="edit-2"></i>
+              </button>
+              <button id="btn-delete-prompt" class="btn btn-danger icon-only" title="Delete Prompt">
+                <i data-feather="trash-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-body">
+          <div class="detail-tags-section">
+            <div class="tags-label">Tags:</div>
+            <div id="detail-tags-list" class="detail-tags-list">
+              <!-- Dynamically populated tags -->
+            </div>
+          </div>
+
+          <div class="prompt-body-section">
+            <div class="prompt-body-header">
+              <span>PROMPT TEXT</span>
+              <span id="prompt-char-count" class="char-count">0 characters</span>
+            </div>
+            <div class="prompt-textarea-wrapper">
+              <pre id="detail-body-text" class="prompt-text-display">Prompt contents will go here...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Folder Modal (Add/Edit) -->
+  <div id="folder-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="folder-modal-title">Create Folder</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="folder-form">
+        <input type="hidden" id="folder-modal-id">
+        <div class="form-group">
+          <label for="folder-name-input">Folder Name</label>
+          <input type="text" id="folder-name-input" placeholder="e.g. Code Assistance, Creative Writing..." required autocomplete="off">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Folder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Prompt Modal (Add/Edit) -->
+  <div id="prompt-modal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="prompt-modal-title">New Prompt</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="prompt-form">
+        <input type="hidden" id="prompt-modal-id">
+        <input type="hidden" id="prompt-modal-folder-id">
+        
+        <div class="form-group">
+          <label for="prompt-title-input">Title</label>
+          <input type="text" id="prompt-title-input" placeholder="e.g. Code Refactor Assistant" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label for="prompt-tags-input">Keywords / Tags</label>
+          <input type="text" id="prompt-tags-input" placeholder="e.g. coding, refactor, javascript (separate with commas)" autocomplete="off">
+          <span class="form-help">Enter tags separated by commas. They will be cleaned and lowercased automatically.</span>
+        </div>
+
+        <div class="form-group form-group-textarea">
+          <label for="prompt-body-input">Prompt Content</label>
+          <textarea id="prompt-body-input" placeholder="Write your prompt content here... Use placeholders like [topic] or {code} to template your prompts." required></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Prompt</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="confirm-modal-title">Delete Item</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message">Are you sure you want to delete this? This action cannot be undone.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="confirm-modal-cancel" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="confirm-modal-submit" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renderer JS -->
+  <script src="renderer.js"></script>
+</body>
+</html>
