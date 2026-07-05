@@ -1,86 +1,91 @@
-# PromptBox 🚀
+<div align="center">
 
-PromptBox is a premium Electron desktop application designed for AI enthusiasts, developers, and writers to manage, organize, tag, and instantly copy their AI prompt templates.
+<img src="assets/promptbox.png" alt="PromptBox logo" width="140">
 
----
+# PromptBox
 
-## Key Features
+**A clean, fast desktop app to organize, tag, and instantly copy your AI prompt templates.**
 
-- **Organized Folders**: Group related prompt templates into folders with active category indicators and prompt counters.
-- **Fast Search & Filters**: Perform global text searches matching prompt titles, contents, and keywords. Filter list dynamically by clicking hashtag categories.
-- **Click-to-Copy Monospace Editor**: View prompts in a clean monospace display box, and copy contents with a single click, supported by a smooth visual "Copied!" feedback state.
-- **Custom Design System**: Dashboard styled with vanilla CSS featuring Outfit & Inter typography, cyan/indigo accents, and switchable dark/light themes (your choice is remembered between sessions).
-- **Zero Configuration DB**: Local, lightweight JSON database (`prompts-db.json`) written to your local app storage directory. Safe, fast, and easy to back up.
-- **Backup & Restore**: Export all folders and prompts to a single JSON file, and import it on another workstation to restore your library (import/export buttons in the sidebar footer).
+[![Release](https://img.shields.io/github/v/release/sebbourgeois/promptbox)](https://github.com/sebbourgeois/promptbox/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Built with Electron](https://img.shields.io/badge/built%20with-Electron-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 
----
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Development](#development) • [Building installers](#building-installers)
+
+</div>
+
+PromptBox is a cross-platform Electron application for AI enthusiasts, developers, and writers who juggle a growing library of prompt templates. Keep them organized in folders, find them in seconds with search and tag filters, and copy them to your clipboard with a single click.
+
+## Features
+
+- **Folders** — Group related prompts into folders, with live prompt counters. Double-click a folder to rename it.
+- **Search everywhere** — Filter folders by name, and search prompts by title, content, or tags. Sort results the way you like.
+- **Tag filters** — Tag your prompts and narrow the list by clicking hashtag pills.
+- **One-click copy** — View prompts in a clean monospace panel and copy them instantly, with visual "Copied!" feedback.
+- **Dark & light themes** — Toggle between themes; your choice is remembered between sessions.
+- **Zero-configuration storage** — Everything lives in a single local JSON file in your app data directory. No accounts, no cloud, no setup.
+- **Backup & restore** — Export your entire library to a JSON file and import it on another machine from the sidebar footer.
 
 ## Installation
 
-Prebuilt installers for Windows (`.exe`), macOS (`.dmg`), and Linux (`.AppImage`) are published automatically for every version on the [Releases page](https://github.com/sebbourgeois/promptbox/releases). Download the file for your platform and run it.
+Prebuilt installers are published automatically for every release on the [Releases page](https://github.com/sebbourgeois/promptbox/releases):
 
-> **Note:** Builds are currently unsigned, so Windows SmartScreen and macOS Gatekeeper may show a warning on first launch.
+| Platform | File |
+| --- | --- |
+| Windows | `.exe` (NSIS installer) |
+| macOS | `.dmg` |
+| Linux | `.AppImage` |
 
----
+Download the file for your platform and run it.
 
-## Getting Started (from source)
+> [!NOTE]
+> Builds are currently unsigned, so Windows SmartScreen and macOS Gatekeeper may show a warning on first launch.
 
-### Prerequisites
+## Usage
 
-You will need [Node.js](https://nodejs.org/) (which includes `npm`) installed on your system.
+On first launch, PromptBox seeds a **Getting Started** folder with a welcome prompt that walks you through the basics:
 
-### Development Setup
+1. Create folders in the left sidebar to organize your prompts.
+2. Add prompts with a title, content, and optional tags.
+3. Use the search fields and tag pills to filter your library.
+4. Select a prompt and hit the copy button — it's on your clipboard.
 
-1. Clone the repository and move into it:
-   ```bash
-   git clone https://github.com/sebbourgeois/promptbox.git
-   cd promptbox
-   ```
+### Where your data lives
 
-2. Install the required Node packages (including `electron` and build utilities):
-   ```bash
-   npm install
-   ```
+Your library is stored as `prompts-db.json` in the standard app data directory for your OS (e.g. `%APPDATA%/promptbox` on Windows, `~/Library/Application Support/promptbox` on macOS, `~/.config/promptbox` on Linux).
 
-3. Start the application in development mode:
-   ```bash
-   npm start
-   ```
+> [!TIP]
+> Use the export button in the sidebar footer to create timestamped JSON backups — they're plain files, easy to version or sync however you prefer.
 
----
+## Development
 
-## Compiling & Packaging (Win, Mac, Linux)
+You only need [Node.js](https://nodejs.org/) (which includes `npm`) installed.
 
-PromptBox is pre-configured with **`electron-builder`** to compile the application into ready-to-run binaries and installers for Windows, macOS, and Linux.
+```bash
+git clone https://github.com/sebbourgeois/promptbox.git
+cd promptbox
+npm install
+npm start
+```
 
-The output packages will be saved to the `./dist` folder.
+The app is intentionally dependency-free at runtime: plain HTML, vanilla CSS, and vanilla JavaScript on top of Electron, with a small IPC surface between the main and renderer processes (`main.js`, `preload.js`, `renderer.js`).
 
-### Compilation Commands
+## Building installers
 
-Run the appropriate script command based on your target operating system:
+PromptBox uses [electron-builder](https://www.electron.build/) to package binaries into the `dist/` folder:
 
-| Platform | Command | Target Format | Notes |
-| :--- | :--- | :--- | :--- |
-| **Windows** | `npm run build:win` | `.exe` (NSIS Installer) | Compiles Windows NSIS executable |
-| **macOS** | `npm run build:mac` | `.dmg` | DMG installer. Requires a Mac device. |
-| **Linux** | `npm run build:linux` | `.AppImage` | Portable Linux executable format |
-| **All Platforms** | `npm run build:all` | All formats | Attempts to package for all targets |
+| Platform | Command | Output |
+| --- | --- | --- |
+| Windows | `npm run build:win` | `.exe` (NSIS installer) |
+| macOS | `npm run build:mac` | `.dmg` |
+| Linux | `npm run build:linux` | `.AppImage` |
+| All | `npm run build:all` | All of the above |
 
-### Build Configurations
+Build parameters (app id, product name, targets, icons) live in the `"build"` block of [package.json](package.json).
 
-You can modify compile parameters in the `"build"` block of [package.json](package.json). This includes:
-- **`appId`**: The bundle identifier (e.g., `com.sebbourgeois.promptbox`).
-- **`productName`**: The name displayed on the system app menus (e.g., `PromptBox`).
-- **Target Builders**: Options like NSIS config, Category keys on Mac, or Linux packaging formats.
+> [!IMPORTANT]
+> macOS `.dmg` packages can only be built on a macOS machine. For public distribution without OS warnings, you'll also need code-signing certificates (Apple Developer Program for macOS, Authenticode for Windows).
 
-### Important Build Notes
-- **macOS Compilation**: To build a macOS `.dmg` package, you **must** run the build script from a macOS system.
-- **Code Signing**: When distributing to public audiences, you will need certificates (e.g., Apple Developer Program membership for macOS, or Authenticode Certificate for Windows SmartScreen) to avoid OS warnings about unverified software.
+### Releases
 
----
-
-## License
-
-PromptBox is open source software released under the [MIT License](LICENSE).
-
-You are free to **use, modify, fork, and redistribute** this project — including for commercial purposes — as long as you **credit the original repository**: keep the copyright and license notice from the [LICENSE](LICENSE) file in your copy, and please include a link back to the original repo in your fork or derivative work.
+Releases are fully automated: bump `"version"` in `package.json` and push to `master`. The [release workflow](.github/workflows/release.yml) tags the version, builds installers for all three platforms, and publishes them as a GitHub Release. Pushes that don't change the version are no-ops.
