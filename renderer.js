@@ -138,10 +138,11 @@ function renderFolders() {
     const li = document.createElement('li');
     li.className = `folder-item ${isSelected ? 'active' : ''}`;
     li.dataset.id = folder.id;
-    
+    li.title = 'Double-click to rename';
+
     li.innerHTML = `
       <div class="folder-info">
-        <i data-feather="${isSelected ? 'folder-open' : 'folder'}"></i>
+        <i data-feather="folder"></i>
         <span class="folder-name">${escapeHTML(folder.name)}</span>
       </div>
       <div class="folder-meta">
@@ -171,6 +172,12 @@ function renderFolders() {
     
     // Rename folder click
     li.querySelector('.btn-edit').addEventListener('click', () => {
+      openFolderModal(folder);
+    });
+
+    // Double-click anywhere on the row also opens rename
+    li.addEventListener('dblclick', (e) => {
+      if (e.target.closest('.folder-action-btn')) return;
       openFolderModal(folder);
     });
     

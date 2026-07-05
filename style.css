@@ -347,7 +347,8 @@ h1, h2, h3, h4 {
   gap: 4px;
 }
 
-.folder-item:hover .folder-actions {
+.folder-item:hover .folder-actions,
+.folder-item.active .folder-actions {
   display: flex;
 }
 
