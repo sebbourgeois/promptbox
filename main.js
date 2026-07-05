@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -81,6 +81,47 @@ app.whenReady().then(() => {
   ipcMain.handle('clipboard:copy', async (event, text) => {
     clipboard.writeText(text);
     return true;
+  });
+
+  ipcMain.handle('db:export', async (event, data) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      title: 'Export PromptBox Backup',
+      defaultPath: `promptbox-backup-${dateStamp}.json`,
+      filters: [{ name: 'JSON Files', extensions: ['json'] }]
+    });
+    if (canceled || !filePath) return { canceled: true };
+    try {
+      const backup = {
+        app: 'promptbox',
+        exportedAt: new Date().toISOString(),
+        folders: data.folders,
+        prompts: data.prompts
+      };
+      fs.writeFileSync(filePath, JSON.stringify(backup, null, 2), 'utf-8');
+      return { canceled: false, path: filePath };
+    } catch (error) {
+      console.error('Error exporting backup:', error);
+      return { canceled: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('db:import', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Import PromptBox Backup',
+      filters: [{ name: 'JSON Files', extensions: ['json'] }],
+      properties: ['openFile']
+    });
+    if (canceled || filePaths.length === 0) return { canceled: true };
+    try {
+      const raw = fs.readFileSync(filePaths[0], 'utf-8');
+      return { canceled: false, data: JSON.parse(raw) };
+    } catch (error) {
+      console.error('Error importing backup:', error);
+      return { canceled: false, error: 'Could not read the file as JSON.' };
+    }
   });
 
   createWindow();

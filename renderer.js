@@ -509,6 +509,72 @@ async function copyActivePrompt() {
 }
 
 // --------------------------------------------------------------------------
+// Backup Export / Import
+// --------------------------------------------------------------------------
+
+async function exportBackup() {
+  const result = await window.api.exportData({
+    folders: state.folders,
+    prompts: state.prompts
+  });
+  if (result.canceled) return;
+  if (result.error) {
+    alert(`Export failed: ${result.error}`);
+  }
+}
+
+function isValidBackup(data) {
+  if (!data || !Array.isArray(data.folders) || !Array.isArray(data.prompts)) return false;
+  const foldersOk = data.folders.every(f =>
+    f && typeof f.id === 'string' && typeof f.name === 'string'
+  );
+  const promptsOk = data.prompts.every(p =>
+    p && typeof p.id === 'string' && typeof p.folderId === 'string' &&
+    typeof p.title === 'string' && typeof p.content === 'string'
+  );
+  return foldersOk && promptsOk;
+}
+
+async function importBackup() {
+  const result = await window.api.importData();
+  if (result.canceled) return;
+  if (result.error) {
+    alert(`Import failed: ${result.error}`);
+    return;
+  }
+
+  const data = result.data;
+  if (!isValidBackup(data)) {
+    alert('Import failed: this file is not a valid PromptBox backup.');
+    return;
+  }
+
+  showConfirmModal(
+    'Import Backup',
+    `This will replace your current data (${state.folders.length} folders, ${state.prompts.length} prompts) with the backup (${data.folders.length} folders, ${data.prompts.length} prompts). This cannot be undone.`,
+    async () => {
+      state.folders = data.folders;
+      state.prompts = data.prompts.map(p => ({
+        ...p,
+        tags: Array.isArray(p.tags) ? p.tags : []
+      }));
+      state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
+      state.activePromptId = null;
+      state.selectedTagFilter = null;
+      state.searchTermFolder = '';
+      state.searchTermPrompt = '';
+      elFolderSearch.value = '';
+      elPromptSearch.value = '';
+
+      await saveStateToDisk();
+      closeConfirmModal();
+      renderAll();
+    },
+    'Import'
+  );
+}
+
+// --------------------------------------------------------------------------
 // Modal UI Controls
 // --------------------------------------------------------------------------
 
@@ -554,9 +620,10 @@ function openPromptModal(prompt = null) {
   elPromptTitleInput.focus();
 }
 
-function showConfirmModal(title, message, onConfirm) {
+function showConfirmModal(title, message, onConfirm, confirmLabel = 'Delete') {
   elConfirmModalTitle.textContent = title;
   elConfirmModalMessage.textContent = message;
+  elConfirmModalSubmit.textContent = confirmLabel;
   onConfirmAction = onConfirm;
   openModal(elConfirmModal);
 }
@@ -577,6 +644,10 @@ function setupEventListeners() {
     applyTheme(next);
     feather.replace();
   });
+
+  // Backup export / import
+  document.getElementById('btn-export-backup').addEventListener('click', exportBackup);
+  document.getElementById('btn-import-backup').addEventListener('click', importBackup);
 
   // Folder actions
   elBtnAddFolder.addEventListener('click', () => openFolderModal());

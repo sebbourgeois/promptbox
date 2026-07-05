@@ -11,6 +11,7 @@ PromptBox is a premium Electron desktop application designed for AI enthusiasts,
 - **Click-to-Copy Monospace Editor**: View prompts in a clean monospace display box, and copy contents with a single click, supported by a smooth visual "Copied!" feedback state.
 - **Custom Design System**: Dashboard styled with vanilla CSS featuring Outfit & Inter typography, cyan/indigo accents, and switchable dark/light themes (your choice is remembered between sessions).
 - **Zero Configuration DB**: Local, lightweight JSON database (`prompts-db.json`) written to your local app storage directory. Safe, fast, and easy to back up.
+- **Backup & Restore**: Export all folders and prompts to a single JSON file, and import it on another workstation to restore your library (import/export buttons in the sidebar footer).
 
 ---
 
