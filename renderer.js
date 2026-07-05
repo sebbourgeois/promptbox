@@ -84,7 +84,7 @@ async function init() {
   try {
     const data = await window.api.loadData();
     state.folders = data.folders || [];
-    state.prompts = data.prompts || [];
+    state.prompts = normalizePrompts(data.prompts || []);
     
     // Select first folder by default if available
     if (state.folders.length > 0) {
@@ -98,13 +98,26 @@ async function init() {
   }
 }
 
-// Save database changes helper
-async function saveStateToDisk() {
-  const data = {
+// Snapshot of everything that persists to the database file (also the backup format)
+function getDbSnapshot() {
+  return {
     folders: state.folders,
     prompts: state.prompts
   };
-  await window.api.saveData(data);
+}
+
+// Save database changes helper
+async function saveStateToDisk() {
+  await window.api.saveData(getDbSnapshot());
+}
+
+// Make folderId the active folder and clear all prompt-scoped view state
+function selectFolder(folderId) {
+  state.activeFolderId = folderId;
+  state.activePromptId = null;
+  state.selectedTagFilter = null;
+  state.searchTermPrompt = '';
+  elPromptSearch.value = '';
 }
 
 // Re-render everything
@@ -162,11 +175,7 @@ function renderFolders() {
     li.addEventListener('click', (e) => {
       // Check if button click was triggered instead
       if (e.target.closest('.folder-action-btn')) return;
-      state.activeFolderId = folder.id;
-      state.activePromptId = null; // Reset selected prompt
-      state.selectedTagFilter = null; // Reset tag filter
-      state.searchTermPrompt = ''; // Reset search prompt
-      elPromptSearch.value = '';
+      selectFolder(folder.id);
       renderAll();
     });
     
@@ -429,8 +438,7 @@ async function deleteFolder(folderId) {
   
   // If active folder was deleted, select another one or reset
   if (state.activeFolderId === folderId) {
-    state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
-    state.activePromptId = null;
+    selectFolder(state.folders.length > 0 ? state.folders[0].id : null);
   }
   
   await saveStateToDisk();
@@ -520,10 +528,7 @@ async function copyActivePrompt() {
 // --------------------------------------------------------------------------
 
 async function exportBackup() {
-  const result = await window.api.exportData({
-    folders: state.folders,
-    prompts: state.prompts
-  });
+  const result = await window.api.exportData(getDbSnapshot());
   if (result.canceled) return;
   if (result.error) {
     alert(`Export failed: ${result.error}`);
@@ -561,17 +566,10 @@ async function importBackup() {
     `This will replace your current data (${state.folders.length} folders, ${state.prompts.length} prompts) with the backup (${data.folders.length} folders, ${data.prompts.length} prompts). This cannot be undone.`,
     async () => {
       state.folders = data.folders;
-      state.prompts = data.prompts.map(p => ({
-        ...p,
-        tags: Array.isArray(p.tags) ? p.tags : []
-      }));
-      state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
-      state.activePromptId = null;
-      state.selectedTagFilter = null;
+      state.prompts = normalizePrompts(data.prompts);
+      selectFolder(state.folders.length > 0 ? state.folders[0].id : null);
       state.searchTermFolder = '';
-      state.searchTermPrompt = '';
       elFolderSearch.value = '';
-      elPromptSearch.value = '';
 
       await saveStateToDisk();
       closeConfirmModal();
@@ -746,6 +744,14 @@ function setupEventListeners() {
 // --------------------------------------------------------------------------
 // Helper Utilities
 // --------------------------------------------------------------------------
+
+// Default missing/invalid fields on prompts entering state (DB load and backup import)
+function normalizePrompts(prompts) {
+  return prompts.map(p => ({
+    ...p,
+    tags: Array.isArray(p.tags) ? p.tags : []
+  }));
+}
 
 function escapeHTML(str) {
   return str

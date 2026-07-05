@@ -39,14 +39,18 @@ function readDatabase() {
   }
 }
 
-function writeDatabase(data) {
+function writeJsonFile(filePath, data) {
   try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   } catch (error) {
-    console.error('Error writing database:', error);
+    console.error('Error writing file:', filePath, error);
     return { success: false, error: error.message };
   }
+}
+
+function writeDatabase(data) {
+  return writeJsonFile(DB_PATH, data);
 }
 
 function createWindow() {
@@ -92,19 +96,13 @@ app.whenReady().then(() => {
       filters: [{ name: 'JSON Files', extensions: ['json'] }]
     });
     if (canceled || !filePath) return { canceled: true };
-    try {
-      const backup = {
-        app: 'promptbox',
-        exportedAt: new Date().toISOString(),
-        folders: data.folders,
-        prompts: data.prompts
-      };
-      fs.writeFileSync(filePath, JSON.stringify(backup, null, 2), 'utf-8');
-      return { canceled: false, path: filePath };
-    } catch (error) {
-      console.error('Error exporting backup:', error);
-      return { canceled: false, error: error.message };
-    }
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      folders: data.folders,
+      prompts: data.prompts
+    };
+    const result = writeJsonFile(filePath, backup);
+    return { canceled: false, error: result.error };
   });
 
   ipcMain.handle('db:import', async (event) => {
