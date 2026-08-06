@@ -39,7 +39,13 @@ Prebuilt installers are published automatically for every release on the [Releas
 Download the file for your platform and run it.
 
 > [!NOTE]
-> Builds are currently unsigned, so Windows SmartScreen and macOS Gatekeeper may show a warning on first launch.
+> **Builds are currently unsigned**, so your OS will warn you on first launch. The app is safe to run — every release is built from this repository by the public [release workflow](.github/workflows/release.yml). To proceed:
+>
+> - **Windows** — SmartScreen shows *"Windows protected your PC"*: click **More info**, then **Run anyway**.
+> - **macOS** — Gatekeeper blocks the app: right-click it and choose **Open**; on recent macOS versions you may instead need **System Settings → Privacy & Security → Open Anyway** after the first blocked attempt.
+> - **Linux** — no warning, but make the AppImage executable first: `chmod +x PromptBox-*.AppImage`.
+>
+> Proper Windows code signing through the [SignPath Foundation](https://signpath.org/) free open-source program is planned — see [docs/SIGNPATH.md](docs/SIGNPATH.md).
 
 ## Usage
 
