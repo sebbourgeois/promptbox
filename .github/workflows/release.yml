@@ -80,11 +80,17 @@ jobs:
       - name: Build installer
         run: npm run ${{ matrix.script }} -- --publish never
 
+      # Only a handoff to the release job below — once the installers are
+      # attached to the GitHub Release they live there for good, and release
+      # assets don't count against the Actions storage quota while artifacts
+      # do. The default 90-day retention kept a redundant ~340 MB second copy
+      # around and filled the whole quota on its own.
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-installer
           path: ${{ matrix.artifacts }}
           if-no-files-found: error
+          retention-days: 1
 
   release:
     name: Publish GitHub Release
